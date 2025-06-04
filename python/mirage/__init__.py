@@ -4,6 +4,8 @@ import z3
 
 def preload_so(lib_path, name_hint):
     try:
+        so_dir = os.path.dirname(lib_path)
+        os.environ["LD_LIBRARY_PATH"] = f"{so_dir}:{os.environ.get('LD_LIBRARY_PATH', '')}"
         ctypes.CDLL(lib_path)
     except OSError as e:
         raise ImportError(f"Could not preload {name_hint} ({lib_path}): {e}")
@@ -13,8 +15,8 @@ _z3_so_path = os.path.join(_z3_libdir, "libz3.so")
 preload_so(_z3_so_path, "libz3.so")
 
 _this_dir = os.path.dirname(__file__)
-_mirage_root = os.path.abspath(os.path.join(_this_dir, "..", ".."))
-_rust_so_path = os.path.join(_mirage_root, "src", "search", "abstract_expr", "abstract_subexpr", "target", "release", "libabstract_subexpr.so")
+_rust_so_path = os.path.join(_this_dir, "libabstract_subexpr.so")
+print(f"Preloading Rust shared object from: {_rust_so_path}")
 preload_so(_rust_so_path, "libabstract_subexpr.so")
 
 from .core import *

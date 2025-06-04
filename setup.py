@@ -21,6 +21,7 @@ import sysconfig
 from setuptools import find_packages, setup, Command
 from contextlib import contextmanager
 import subprocess
+from setuptools.command.build_ext import build_ext
 
 # need to use distutils.core for correct placement of cython dll
 if "--inplace" in sys.argv:                                              
@@ -75,21 +76,6 @@ def config_cython():
     except ImportError:
         print("WARNING: cython is not installed!!!")
         raise SystemExit(1)
-    
-# Install Rust if not yet available
-try:
-    # Attempt to run a Rust command to check if Rust is installed
-    subprocess.check_output(['cargo', '--version'])
-except FileNotFoundError:
-    print("Rust/Cargo not found, installing it...")
-    # Rust is not installed, so install it using rustup
-    try:
-        subprocess.run("curl https://sh.rustup.rs -sSf | sh -s -- -y", shell=True, check=True)
-        print("Rust and Cargo installed successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"Error: {e}")
-    # Add the cargo binary directory to the PATH
-    os.environ["PATH"] = f"{os.path.join(os.environ.get('HOME', '/root'), '.cargo', 'bin')}:{os.environ.get('PATH', '')}"
 
 mirage_path = path.dirname(__file__)
 # z3_path = os.path.join(mirage_path, 'deps', 'z3', 'build')
@@ -97,16 +83,18 @@ mirage_path = path.dirname(__file__)
 if mirage_path == '':
     mirage_path = '.'
 
-try:
-    subprocess.check_output(['cargo', 'build', '--release'], cwd='src/search/abstract_expr/abstract_subexpr')
-except subprocess.CalledProcessError as e:
-    print("Failed to build abstract_subexpr Rust library, building it ...")
-    try:
-        subprocess.run(['cargo', 'build', '--release'], cwd='src/search/abstract_expr/abstract_subexpr', check=True)
-        print("Abstract_subexpr Rust library built successfully.")
-    except subprocess.CalledProcessError as e:
-        print("Failed to build abstract_subexpr Rust library.")
-    os.environ['ABSTRACT_SUBEXPR_LIB'] = os.path.join(mirage_path,'src', 'search', 'abstract_expr', 'abstract_subexpr', 'target', 'release', 'libabstract_subexpr.so')
+class BuildRustLib(build_ext):
+    def run(self):
+        rust_dir = os.path.join(mirage_path, "src", "search", "abstract_expr", "abstract_subexpr")
+        print(f"Building Rust library in {rust_dir}")
+        subprocess.check_call(["cargo", "build", "--release"], cwd=rust_dir)
+
+        so_name = "libabstract_subexpr.so"
+        so_path = os.path.join(rust_dir, "target", "release", so_name)
+        dest_path = os.path.join(mirage_path, "python", "mirage", so_name)
+        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+        shutil.copy(so_path, dest_path)
+        print(f"Copied {so_path} to {dest_path}")
 
 # build Mirage runtime library
 try:
@@ -185,5 +173,6 @@ with copy_include() as copied:
           url='https://github.com/mirage-project/mirage',
           ext_modules=config_cython(),
           include_package_data=True,
+          cmdclass={'build_ext': BuildRustLib},
           #**setup_args,
           )
