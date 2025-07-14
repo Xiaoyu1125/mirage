@@ -162,6 +162,10 @@ pub fn rules(mut nums: Vec<u32>) -> Vec<Rewrite> {
         rw!("rms_norm_to_rms";
             "(rms_norm ?t0 ?d0)"
             <=> "(bc_div ?t0 (rms ?t0 ?d0))"),
+
+        rw!("rms_definition";
+            "(rms ?t0 ?d0)"
+            <=> "(sqrt (sum (square ?t0) ?d0))"),
     ].concat();
 
     let mut rules1 = vec![
@@ -248,7 +252,6 @@ pub fn rules(mut nums: Vec<u32>) -> Vec<Rewrite> {
             if is_datadim(&["?d0"], vec!["data_dim2".to_string()]) ),
     ];
 
-
    let mut rules4 = vec![
         rw!("reduce-partition-combine";
             "(partition (combine (partial_sum ?t0 ?d2 ?i0) ?d0 ?d2) ?d0 ?d1 ?i0)"
@@ -268,10 +271,6 @@ pub fn rules(mut nums: Vec<u32>) -> Vec<Rewrite> {
     ]; 
 
     let mut rules5 = vec![
-
-        rw!("rms-to-sumtox";
-            "(rms (reduce (partition ?t0 ?d0 ?d1 ?i0) ?d1) ?d0)"
-            => "(rms ?t0 ?d0)" ),
 
         rw!("sum-to-sumtox";
             "(sum (reduce (partition ?t0 ?d0 ?d1 ?i0) ?d1) ?d0)"
