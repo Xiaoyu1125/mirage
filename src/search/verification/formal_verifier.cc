@@ -1,6 +1,5 @@
 #include "mirage/search/verification/formal_verifier.h"
 #include "mirage/search/op_utils.h"
-
 #include <iostream>
 
 namespace mirage {
@@ -204,10 +203,14 @@ std::vector<std::string>
         }
         case type::TBOperatorType::TB_FORLOOP_ACCUM_RED_LD_RMS_OP: {
           std::string a = tensor_exprs.at(op->input_tensors[0].guid);
+          //square
+          a = "(square " + a + ")";
+          //reduce
           if (graph.forloop_range > 1) {
             a = "(reduce " + a + " " + df + ")";
           }
-          tensor_exprs.emplace(op->output_tensors[0].guid, "(rms" + a + ")");
+          a = "(sum " + a + " " + data_dim[0] + ")";
+          tensor_exprs.emplace(op->output_tensors[0].guid, "(sqrt " + a + ")");
           break;
         }
         case type::TBOperatorType::TB_FORLOOP_ACCUM_RED_LD_SUM_OP: {
@@ -232,15 +235,15 @@ std::vector<std::string>
           if (graph.forloop_range > 1) {
             a = "(reduce " + a + " " + df + ")";
           }
-          std::string reddim = "reddim" + std::to_string(redtox_id++);
+          std::string reddim =
+              "reddim" + std::to_string(redtox_id++);
           all_dims.insert(reddim);
           int reduce_degree =
               op->input_tensors[0].dim[op->input_tensors[0].num_dims - 1] /
               op->output_tensors[0].dim[op->output_tensors[0].num_dims - 1];
           a = "(partition " + a + " " + data_dim[0] + " " + reddim + " " +
               std::to_string(reduce_degree) + ")";
-          tensor_exprs.emplace(op->output_tensors[0].guid,
-                               "(reduce " + a + " " + reddim + ")");
+          tensor_exprs.emplace(op->output_tensors[0].guid, "(reduce " + a + " " + reddim + ")");
           break;
         }
         case type::TBOperatorType::TB_MATMUL_OP: {
@@ -274,7 +277,7 @@ std::vector<std::string>
         case type::TBOperatorType::TB_RMS_NORM_OP: {
           std::string a = tensor_exprs.at(op->input_tensors[0].guid);
           tensor_exprs.emplace(op->output_tensors[0].guid,
-                               "(rms_norm " + a + ")");
+                               "(rms_norm " + a + " " + data_dim[0] + ")");
           break;
         }
         case type::TBOperatorType::TB_SQUARE_OP: {
@@ -391,7 +394,7 @@ std::vector<std::string>
         case type::KNOperatorType::KN_RMS_NORM_OP: {
           std::string a = tensor_exprs.at(op->input_tensors[0].guid);
           tensor_exprs.emplace(op->output_tensors[0].guid,
-                               "(rms_norm " + a + ")");
+                               "(rms_norm " + a + " " + data_dim[0] + ")");
           break;
         }
         case type::KNOperatorType::KN_SILU_OP: {
