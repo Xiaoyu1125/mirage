@@ -24,6 +24,7 @@ define_language! {
 
         "rms" = Rms([Id; 2]),
         "rms_norm" = RmsNorm([Id; 2]),
+
         "silu" = Silu(Id),
         "gelu" = Gelu(Id),
         "relu" = Relu(Id),
@@ -34,10 +35,10 @@ define_language! {
         "reduce" = Reduce([Id; 2]),
         "partial_sum" = PartialSum([Id; 3]),
         "dim_mul" = DimMul([Id; 2]),
-
-        Symbol(Symbol),
+         Symbol(Symbol),
     }
 }
+
 
 fn is_unique(vars: &[&str]) -> impl Fn(&mut EGraph, Id, &Subst) -> bool + 'static {
     let parsed_vars: Vec<Var> = vars.iter().map(|v| v.parse().unwrap()).collect();
