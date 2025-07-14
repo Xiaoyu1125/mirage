@@ -203,9 +203,9 @@ std::vector<std::string>
         }
         case type::TBOperatorType::TB_FORLOOP_ACCUM_RED_LD_RMS_OP: {
           std::string a = tensor_exprs.at(op->input_tensors[0].guid);
-          //square
+          // square
           a = "(square " + a + ")";
-          //reduce
+          // reduce
           if (graph.forloop_range > 1) {
             a = "(reduce " + a + " " + df + ")";
           }
@@ -235,15 +235,15 @@ std::vector<std::string>
           if (graph.forloop_range > 1) {
             a = "(reduce " + a + " " + df + ")";
           }
-          std::string reddim =
-              "reddim" + std::to_string(redtox_id++);
+          std::string reddim = "reddim" + std::to_string(redtox_id++);
           all_dims.insert(reddim);
           int reduce_degree =
               op->input_tensors[0].dim[op->input_tensors[0].num_dims - 1] /
               op->output_tensors[0].dim[op->output_tensors[0].num_dims - 1];
           a = "(partition " + a + " " + data_dim[0] + " " + reddim + " " +
               std::to_string(reduce_degree) + ")";
-          tensor_exprs.emplace(op->output_tensors[0].guid, "(reduce " + a + " " + reddim + ")");
+          tensor_exprs.emplace(op->output_tensors[0].guid,
+                               "(reduce " + a + " " + reddim + ")");
           break;
         }
         case type::TBOperatorType::TB_MATMUL_OP: {
