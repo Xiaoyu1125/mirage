@@ -162,10 +162,6 @@ pub fn rules(mut nums: Vec<u32>) -> Vec<Rewrite> {
         rw!("rms_norm_to_rms";
             "(rms_norm ?t0 ?d0)"
             <=> "(bc_div ?t0 (rms ?t0 ?d0))"),
-
-        rw!("rms_definition";
-            "(rms ?t0 ?d0)"
-            <=> "(sqrt (sum (square ?t0) ?d0))"),
     ].concat();
 
     let mut rules1 = vec![
@@ -220,6 +216,10 @@ pub fn rules(mut nums: Vec<u32>) -> Vec<Rewrite> {
             => "(partition (sum ?t0 ?d0) ?d1 ?d2 ?i0)"  
             if is_unique(&["?d0", "?d1"]) ),
 
+        rw!("partition_sum"; 
+            "(sum (replicate ?t0 ?d1 ?i0) ?d0)"
+            => "(replicate (sum ?t0 ?d0) ?d1 ?i0)" ),
+
         rw!("combine_sum"; 
             "(combine (sum ?t0 ?d0) ?d1 ?d2)" 
             => "(sum (combine ?t0 ?d1 ?d2) ?d0)" 
@@ -268,6 +268,10 @@ pub fn rules(mut nums: Vec<u32>) -> Vec<Rewrite> {
     ]; 
 
     let mut rules5 = vec![
+
+        rw!("rms-to-sumtox";
+            "(rms (reduce (partition ?t0 ?d0 ?d1 ?i0) ?d1) ?d0)"
+            => "(rms ?t0 ?d0)" ),
 
         rw!("sum-to-sumtox";
             "(sum (reduce (partition ?t0 ?d0 ?d1 ?i0) ?d1) ?d0)"
@@ -461,6 +465,14 @@ pub fn rules(mut nums: Vec<u32>) -> Vec<Rewrite> {
 
     ].concat();
 
+    let mut rules9 = vec![
+
+        rw!("bc-div-commute-partition";
+            "(bc_div (partition ?t0 ?d0 ?d1 ?i0) ?t1)"
+            <=> "(partition (bc_div ?t0 ?t1) ?d0 ?d1 ?i0)" ),
+
+    ].concat();
+
     for i in 0..nums.len() {
         for j in (i+1)..nums.len() {
             let a = *(&mut nums[i]);
@@ -486,6 +498,7 @@ pub fn rules(mut nums: Vec<u32>) -> Vec<Rewrite> {
     rules.append(&mut rules6);
     rules.append(&mut rules7);
     rules.append(&mut rules8);
+    rules.append(&mut rules9);
 
     rules
 }
